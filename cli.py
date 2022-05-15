@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 """
+Modified version of pyldcli script:
 pyldcli - CLI script for PyLD
 Source: https://github.com/digitalbazaar/pyld/pull/37/commits/3e990d4a486d577ea3cdeeabbf2a545b8fcba6f0
 Author: Wes Turner
@@ -14,7 +15,12 @@ import sys
 
 import pyld
 
+from extra_parsers import register_rdflib_parsers
+
 log = logging.getLogger()
+
+# register parsers for other RDF serialization formats not supported by pyLD
+register_rdflib_parsers()
 
 
 def rdf_to_jsonld(path, options):
@@ -54,10 +60,13 @@ def rdf_to_jsonld(path, options):
 
     elif options.get('normalize'):
         output = pyld.jsonld.normalize(output, {'format': options.get('format')})
-
-    json_str = json.dumps(output, indent=options.get('indent', 1))
-    log.debug("rdf_to_jsonld: len(output): %d" % len(json_str))
-    return json_str
+    try:
+        json_str = json.dumps(output, indent=options.get('indent', 1))
+        log.debug("rdf_to_jsonld: len(output): %d" % len(json_str))
+        return json_str
+    except Exception as e:
+        log.error("Cannot dump data as json, returning original data")
+        return output
 
 
 import unittest
@@ -145,6 +154,12 @@ def main(*argv):
     prs.add_argument('--format',
                      help='Input file format [default: application/nquads]',
                      dest='format',
+                     action='store')
+
+    prs.add_argument('-o', '--output',
+                     help=('Output file path. If not given, then data will be'
+                        'printed to stdout.'),
+                     dest='output',
                      action='store')
 
     prs.add_argument('--rdf-type',
@@ -244,6 +259,7 @@ def main(*argv):
     else:
         _argv = list(argv)
     opts = prs.parse_args(args=_argv)
+    output = open(opts.output, 'w') if opts.output else sys.stdout
 
     if not opts.quiet:
         logging.basicConfig()
@@ -294,8 +310,9 @@ def main(*argv):
             options['format'] = opts.format  # read_rdf
 
         json_str = rdf_to_jsonld(opts.rdf_to_jsonld, options)
-        #print(json_str)
+        print(json_str, file=output)
 
+    output.close()
     return 0
 
 

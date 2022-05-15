@@ -40,6 +40,9 @@ need for JSON-LD 1.1 support in _rdflib_.
 [jsonld-cli](https://github.com/digitalbazaar/jsonld-cli) is a CLI tool based on
 [jsonld.js](https://github.com/digitalbazaar/jsonld.js).
 
+It turns out that jsonld-cli [ignores input file type](https://github.com/digitalbazaar/jsonld-cli/issues/19).
+If you need to read RDF non-JSON-LD file, you may want to use _cli.py_ instead.
+
 ##### examples
 1. Convert remote jsonld file to nquads format:
 ```bash
@@ -57,3 +60,11 @@ jsonld compact \
 #### pyLD
 _pyLD_ does not provide official CLI. [cli.py](./cli.py) is a script adding CLI support for
 _pyLD_, proposed by Wes Turner.
+Additionally, script registers custom parsers for RDF serialization formats.
+
+##### RDF to JSON-LD
+To convert RDF file in any serialization format (e.g. turtle),
+use ``--rdf-to-jsonld`` option. E.g. to convert [void.ttl](https://nlmpubs.nlm.nih.gov/projects/mesh/rdf/2021/void_1.0.0.ttl) file:
+```bash
+python cli.py --rdf-to-jsonld void.ttl --format text/turtle -o void.jsonld
+```
